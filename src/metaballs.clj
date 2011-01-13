@@ -15,7 +15,7 @@
                  (- vx) vx)
         new-vy (if (or (> y *HEIGHT*) (neg? y))
                  (- vy) vy)]
-    (struct metaball (+ x new-vx), (+ y new-vy), new-vx, new-vy radius color)))
+    (struct metaball (+ x new-vx), (+ y new-vy), new-vx, new-vy, radius, color)))
 
 (defn ^:static color-in-range [& args] 
   (let [[r g b] (map #(cond 
@@ -60,8 +60,6 @@
                               (+ green-cur (* influence bgreen))
                               (+ blue-cur (* influence bblue))])) 
                   [0, 0, 0, 0] balls)]
-            
-            ;(.setColor g Color/BLACK)
 
             ;;center
             (when (>= total *MIN-THRESHOLD*)              
