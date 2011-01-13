@@ -22,7 +22,7 @@
                         (< % 0) 0
                         (> % 255) 255
                         :default (int %)) args)] 
-    (new Color r g b)))
+    (new Color (int r) (int g) (int b))))
 
 (defn ^:static falloff-color [c total]
   (let [distance (cond 
@@ -35,6 +35,10 @@
         dy (double (- y py))
         dist (Math/sqrt (+ (* dx dx) (* dy dy)))]
     (if (> dist 0) (double (/ radius dist)) 0)))
+
+(defn ^:static paint-square [#^Graphics g #^Color color x y size]
+  (.setColor g color)
+  (.fillRect g x y size size))
 
 (defn ^:static draw [#^Canvas canvas balls]
   (let [buffer  (.getBufferStrategy canvas)
@@ -56,25 +60,25 @@
                               (+ green-cur (* influence bgreen))
                               (+ blue-cur (* influence bblue))])) 
                   [0, 0, 0, 0] balls)]
-          
             
-            (.setColor g Color/BLACK)
-            
+            ;(.setColor g Color/BLACK)
+
             ;;center
             (when (>= total *MIN-THRESHOLD*)              
-              (.setColor g (color-in-range red green blue)))
+              (paint-square g (color-in-range red green blue) x y step))
             
             ;;outline
             (when (and (>= total *MIN-THRESHOLD*) (<= total *MAX-THRESHOLD*))                
-              (.setColor g (color-in-range red green blue)))
-              
+              (paint-square g (color-in-range red green blue) x y step))
+            
             ;;falloff
             (when (<= total *MAX-THRESHOLD*)
-              (.setColor g (color-in-range 
-                             (falloff-color red total) 
-                             (falloff-color green total) 
-                             (falloff-color blue total))))
-            (.fillRect g x y step step))
+              (paint-square g 
+                (color-in-range 
+                  (falloff-color red total) 
+                  (falloff-color green total) 
+                  (falloff-color blue total))
+                x y step)))
             
           (when (< y *HEIGHT*)              
             (recur (+ y step))))
