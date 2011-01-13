@@ -100,8 +100,8 @@
         canvas (Canvas.)
         balls (atom (map (fn [_]
                            (struct metaball
-                             (double (inc (rand-int *WIDTH*)))
-                             (double (inc (rand-int *HEIGHT*)))
+                             (rand-int *WIDTH*)
+                             (rand-int *HEIGHT*)
                              (double (inc (rand-int 6)))
                              (double (inc (rand-int 6)))
                              (+ 10 (rand-int 19))
