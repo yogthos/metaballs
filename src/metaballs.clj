@@ -1,76 +1,81 @@
 (ns metaballs
   (:import
-    (javax.swing JFrame)
-    (java.awt Canvas Graphics Color)))
+    [javax.swing JFrame]
+    [java.awt Canvas Graphics Color]
+    java.awt.image.BufferStrategy))
 
-(def *WIDTH* 400)
-(def *HEIGHT* 400)
-(def *MIN-THRESHOLD* (double 1))
-(def *MAX-THRESHOLD* (double 1.1))
+(def ^:const WIDTH (int 400))
+(def ^:const HEIGHT (int 400))
+(def ^:const MIN-THRESHOLD (double 1))
+(def ^:const MAX-THRESHOLD (double 1.1))
 
-(defstruct metaball :x :y :vx :vy :radius :color)
+(defn ^:static move [{:keys [x y vx vy radius color]}]
+  (let [new-vx (double (if (or (> x WIDTH) (neg? x)) (- vx) vx))
+        new-vy (double (if (or (> y HEIGHT) (neg? y)) (- vy) vy))]
+    {:x (double (+ x new-vx))
+     :y (double (+ y new-vy))
+     :vx new-vx
+     :vy new-vy
+     :radius radius
+     :color color}))
 
-(defn ^:static move [{x :x, y :y, vx :vx, vy :vy, radius :radius, color :color}]
-  (let [new-vx (if (or (> x *WIDTH*) (neg? x))
-                 (- vx) vx)
-        new-vy (if (or (> y *HEIGHT*) (neg? y))
-                 (- vy) vy)]
-    (struct metaball (+ x new-vx), (+ y new-vy), new-vx, new-vy, radius, color)))
+(defn ^:static fix-color [c]
+  (int
+    (cond 
+      (< c 0) 0
+      (> c 255) 255
+      :default c)))
 
-(defn ^:static color-in-range [& args] 
-  (let [[r g b] (map #(cond 
-                        (< % 0) 0
-                        (> % 255) 255
-                        :default (int %)) args)] 
-    (new Color (int r) (int g) (int b))))
+(defn ^:static color-in-range [r g b] 
+  (new Color (fix-color r) (fix-color g) (fix-color b)))
 
 (defn ^:static falloff-color [c total]
-  (let [distance (cond 
-                   (> total *MAX-THRESHOLD*) (- *MAX-THRESHOLD* total) 
-                   :default (+ *MIN-THRESHOLD* total))]
-    (* 2 (/ c  distance))))
+  (* 2 (/ c  (if (> total MAX-THRESHOLD) 
+               (- MAX-THRESHOLD total) 
+               (+ MIN-THRESHOLD total)))))
 
-(defn ^:static get-influence [{x :x, y :y, radius :radius} px py]
+(defn ^:static get-influence 
+  [{:keys [^double x ^double y ^double radius]} ^double px ^double py]
   (let [dx (double (- x px))
         dy (double (- y py))
         dist (Math/sqrt (+ (* dx dx) (* dy dy)))]
-    (if (> dist 0) (double (/ radius dist)) 0)))
+    (if (>= dist 0) (double (/ radius dist)) 0)))
 
-(defn ^:static paint-square [#^Graphics g #^Color color x y size]
+(defn ^:static paint-square [^Graphics g ^Color color x y size]
   (.setColor g color)
   (.fillRect g x y size size))
 
-(defn ^:static draw [#^Canvas canvas balls]
-  (let [buffer  (.getBufferStrategy canvas)
-        g       (.getDrawGraphics buffer)
+(defn ^:static draw [^Canvas canvas balls]
+  (let [^BufferStrategy buffer  (.getBufferStrategy canvas)
+        ^Graphics g             (.getDrawGraphics buffer)
         step 4]
     (try      
       (doto g
         (.setColor Color/BLACK)
-        (.fillRect 0 0 *WIDTH* *HEIGHT*))
+        (.fillRect 0 0 WIDTH HEIGHT))
 
       (loop [x 0]
         (loop [y 0]          
-          (let [[total red green blue] 
+          (let [[^double total red green blue] 
                 (reduce  (fn [[sum red-cur green-cur blue-cur] ball] 
                            (let [influence (get-influence ball x y)
-                                 [bred bgreen bblue] (:color ball)] 
+                                 [r g b] (:color ball)] 
                              [(+ sum influence)
-                              (+ red-cur (* influence bred))
-                              (+ green-cur (* influence bgreen))
-                              (+ blue-cur (* influence bblue))])) 
+                              (+ red-cur (* influence r))
+                              (+ green-cur (* influence g))
+                              (+ blue-cur (* influence b))])) 
                   [0, 0, 0, 0] balls)]
 
             ;;center
-            (when (>= total *MIN-THRESHOLD*)              
+            (if (>= total MIN-THRESHOLD)              
               (paint-square g (color-in-range red green blue) x y step))
             
             ;;outline
-            (when (and (>= total *MIN-THRESHOLD*) (<= total *MAX-THRESHOLD*))                
+            (if (and (>= total MIN-THRESHOLD) (<= total MAX-THRESHOLD))                
               (paint-square g (color-in-range red green blue) x y step))
             
             ;;falloff
-            (when (<= total *MAX-THRESHOLD*)
+            (if (<= total MAX-THRESHOLD)
               (paint-square g 
                 (color-in-range 
                   (falloff-color red total) 
@@ -78,16 +83,16 @@
                   (falloff-color blue total))
                 x y step)))
             
-          (when (< y *HEIGHT*)              
-            (recur (+ y step))))
-        (when (< x *WIDTH*)           
-          (recur (+ x step))))
+          (when (< y HEIGHT)              
+            (recur (int (+ y step)))))
+        (when (< x WIDTH)           
+          (recur (int (+ x step)))))
       
       (finally (.dispose g)))
     (if-not (.contentsLost buffer)
       (.show buffer)) ))
 
-(defn start-renderer [canvas balls]
+(defn start-renderer [^Canvas canvas balls]
   (->>
     (fn [] (draw canvas @balls) (recur))
     (new Thread)
@@ -97,17 +102,16 @@
   (let [frame  (JFrame. "Metaball")
         canvas (Canvas.)
         balls (atom (map (fn [_]
-                           (struct metaball
-                             (rand-int *WIDTH*)
-                             (rand-int *HEIGHT*)
-                             (double (inc (rand-int 6)))
-                             (double (inc (rand-int 6)))
-                             (+ 10 (rand-int 19))
-                             [(rand-int 256) (rand-int 256) (rand-int 256)]))  
-                      (range 6)))]
+                           {:x      (rand-int WIDTH)
+                            :y      (rand-int HEIGHT)
+                            :vx     (double (inc (rand-int 6)))
+                            :vy     (double (inc (rand-int 6)))
+                            :radius (+ 10 (rand-int 19))
+                            :color  [(rand-int 256) (rand-int 256) (rand-int 256)]})  
+                         (range 6)))]
      
     (doto frame
-      (.setSize *WIDTH* *HEIGHT*)      
+      (.setSize WIDTH HEIGHT)      
       (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
       (.setResizable false)
       (.add canvas)
