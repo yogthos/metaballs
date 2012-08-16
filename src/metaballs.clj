@@ -4,6 +4,8 @@
     [java.awt Canvas Graphics Color]
     java.awt.image.BufferStrategy))
 
+(set! *warn-on-reflection* true)
+
 (def ^:const WIDTH (int 400))
 (def ^:const HEIGHT (int 400))
 (def ^:const MIN-THRESHOLD (double 1))
@@ -27,17 +29,12 @@
       :default c)))
 
 (defn ^:static color-in-range [r g b] 
-  (new Color (fix-color r) (fix-color g) (fix-color b)))
-
-#_ (def color-in-range-memo (memoize color-in-range))
+  (new Color ^int (fix-color r) ^int (fix-color g) ^int (fix-color b)))
 
 (defn ^:static falloff-color [c total]
   (* 2 (/ c  (if (> total MAX-THRESHOLD) 
                (- MAX-THRESHOLD total) 
                (+ MIN-THRESHOLD total)))))
-
-#_ (def falloff-color-memo
-  (memoize falloff-color))
 
 (defn ^:static get-influence 
   [{:keys [^double x ^double y ^double radius]} ^double px ^double py]
@@ -53,7 +50,7 @@
 (defn ^:static draw [^Canvas canvas balls]
   (let [^BufferStrategy buffer (.getBufferStrategy canvas)
         ^Graphics g            (.getDrawGraphics buffer)
-        step 4]
+        step 3]
     (try      
       (doto g
         (.setColor Color/BLACK)
@@ -86,34 +83,27 @@
                   (falloff-color red total) 
                   (falloff-color green total) 
                   (falloff-color blue total))
-                x y step)))
-            
-          (when (< y HEIGHT)              
+                x y step)))            
+          (if (< y HEIGHT)              
             (recur (int (+ y step)))))
-        (when (< x WIDTH)           
+        (if (< x WIDTH)           
           (recur (int (+ x step)))))
       
       (finally (.dispose g)))
     (if-not (.contentsLost buffer)
       (.show buffer)) ))
-
-(defn start-renderer [^Canvas canvas balls]
-  (->>
-    (fn [] (draw canvas @balls) (recur))
-    (new Thread)
-    (.start)))
  
+(defn metaball [_]
+  {:x      (rand-int WIDTH)
+   :y      (rand-int HEIGHT)
+   :vx     (double (inc (rand-int 6)))
+   :vy     (double (inc (rand-int 6)))
+   :radius (+ 10 (rand-int 19))
+   :color  [(rand-int 256) (rand-int 256) (rand-int 256)]})
+
 (defn -main [& args]
-  (let [frame  (JFrame. "Metaball")
-        canvas (Canvas.)
-        balls (atom (map (fn [_]
-                           {:x      (rand-int WIDTH)
-                            :y      (rand-int HEIGHT)
-                            :vx     (double (inc (rand-int 6)))
-                            :vy     (double (inc (rand-int 6)))
-                            :radius (+ 10 (rand-int 19))
-                            :color  [(rand-int 256) (rand-int 256) (rand-int 256)]})  
-                         (range 6)))]
+  (let [frame  (JFrame. "Metaballs")
+        canvas (Canvas.)]
      
     (doto frame
       (.setSize WIDTH HEIGHT)      
@@ -126,13 +116,9 @@
       (.createBufferStrategy 2)      
       (.setVisible true)
       (.requestFocus))
-     
-    (start-renderer canvas balls)
-    
-    (loop []      
-      (swap! balls 
-        #(map move %))
-      (Thread/sleep 50)
-      (recur))))
+         
+    (loop [balls (map metaball (range 6))]
+      (draw canvas balls)
+      (recur (map move balls)))))
  
-(-main)
+;(-main)
