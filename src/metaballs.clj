@@ -29,12 +29,15 @@
 (defn ^:static color-in-range [r g b] 
   (new Color (fix-color r) (fix-color g) (fix-color b)))
 
-(def color-in-range-memo (memoize color-in-range))
+#_ (def color-in-range-memo (memoize color-in-range))
 
 (defn ^:static falloff-color [c total]
   (* 2 (/ c  (if (> total MAX-THRESHOLD) 
                (- MAX-THRESHOLD total) 
                (+ MIN-THRESHOLD total)))))
+
+#_ (def falloff-color-memo
+  (memoize falloff-color))
 
 (defn ^:static get-influence 
   [{:keys [^double x ^double y ^double radius]} ^double px ^double py]
@@ -70,7 +73,7 @@
 
             ;;center
             (if (>= total MIN-THRESHOLD)              
-              (paint-square g (color-in-range-memo red green blue) x y step))
+              (paint-square g (color-in-range red green blue) x y step))
             
             ;;outline
             (if (and (>= total MIN-THRESHOLD) (<= total MAX-THRESHOLD))                
