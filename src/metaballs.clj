@@ -6,8 +6,8 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:const WIDTH (int 400))
-(def ^:const HEIGHT (int 400))
+(def ^:const WIDTH (int 300))
+(def ^:const HEIGHT (int 300))
 (def ^:const MIN-THRESHOLD (double 1))
 (def ^:const MAX-THRESHOLD (double 1.1))
 
@@ -22,14 +22,13 @@
      :color color}))
 
 (defn ^:static fix-color [c]
-  (int
-    (cond 
-      (< c 0) 0
-      (> c 255) 255
-      :default c)))
+  (cond 
+    (< c 0) 0
+    (> c 255) 255
+    :default c))
 
-(defn ^:static color-in-range [r g b] 
-  (new Color ^int (fix-color r) ^int (fix-color g) ^int (fix-color b)))
+(defn ^:static color-in-range [r g b]
+  (new Color (int (fix-color r)) (int (fix-color g)) (int (fix-color b))))
 
 (defn ^:static falloff-color [c total]
   (* 2 (/ c  (if (> total MAX-THRESHOLD) 
@@ -37,7 +36,7 @@
                (+ MIN-THRESHOLD total)))))
 
 (defn ^:static get-influence 
-  [{:keys [^double x ^double y ^double radius]} ^double px ^double py]
+  [{:keys [x y radius]} px py]
   (let [dx (double (- x px))
         dy (double (- y py))
         dist (Math/sqrt (+ (* dx dx) (* dy dy)))]
@@ -46,6 +45,14 @@
 (defn ^:static paint-square [^Graphics g ^Color color x y size]
   (.setColor g color)
   (.fillRect g x y size size))
+
+(defn ^:static compute-color [x y [sum red-cur green-cur blue-cur] ball]   
+  (let [influence (get-influence ball x y)
+        [r g b] (:color ball)] 
+    [(+ sum influence)
+     (+ red-cur (* influence r))
+     (+ green-cur (* influence g))
+     (+ blue-cur (* influence b))]))
 
 (defn ^:static draw [^Canvas canvas balls]
   (let [^BufferStrategy buffer (.getBufferStrategy canvas)
@@ -58,15 +65,8 @@
 
       (loop [x 0]
         (loop [y 0]          
-          (let [[^double total red green blue] 
-                (reduce  (fn [[sum red-cur green-cur blue-cur] ball] 
-                           (let [influence (get-influence ball x y)
-                                 [r g b] (:color ball)] 
-                             [(+ sum influence)
-                              (+ red-cur (* influence r))
-                              (+ green-cur (* influence g))
-                              (+ blue-cur (* influence b))])) 
-                  [0, 0, 0, 0] balls)]
+          (let [[total red green blue] 
+                (reduce (partial compute-color x y) [0 0 0 0] balls)]
 
             ;;center
             (if (>= total MIN-THRESHOLD)              
@@ -121,4 +121,4 @@
       (draw canvas balls)
       (recur (map move balls)))))
  
-;(-main)
+(-main)
