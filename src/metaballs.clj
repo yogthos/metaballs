@@ -29,6 +29,8 @@
 (defn ^:static color-in-range [r g b] 
   (new Color (fix-color r) (fix-color g) (fix-color b)))
 
+(def color-in-range-memo (memoize color-in-range))
+
 (defn ^:static falloff-color [c total]
   (* 2 (/ c  (if (> total MAX-THRESHOLD) 
                (- MAX-THRESHOLD total) 
@@ -46,8 +48,8 @@
   (.fillRect g x y size size))
 
 (defn ^:static draw [^Canvas canvas balls]
-  (let [^BufferStrategy buffer  (.getBufferStrategy canvas)
-        ^Graphics g             (.getDrawGraphics buffer)
+  (let [^BufferStrategy buffer (.getBufferStrategy canvas)
+        ^Graphics g            (.getDrawGraphics buffer)
         step 4]
     (try      
       (doto g
@@ -68,7 +70,7 @@
 
             ;;center
             (if (>= total MIN-THRESHOLD)              
-              (paint-square g (color-in-range red green blue) x y step))
+              (paint-square g (color-in-range-memo red green blue) x y step))
             
             ;;outline
             (if (and (>= total MIN-THRESHOLD) (<= total MAX-THRESHOLD))                
