@@ -87,6 +87,7 @@
       (.requestFocus))
          
     (loop [balls (map metaball (range 6))]      
+      (draw canvas balls)
       (recur (map move balls)))))
  
 (-main)
