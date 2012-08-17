@@ -4,8 +4,6 @@
     [java.awt Canvas Graphics Color]
     java.awt.image.BufferStrategy))
 
-(set! *warn-on-reflection* true)
-
 (def ^:const WIDTH (int 300))
 (def ^:const HEIGHT (int 300))
 (def ^:const THRESHOLD (double 1.005))
@@ -28,9 +26,6 @@
 
 (defn ^:static color-in-range [r g b]
   (new Color (int (fix-color r)) (int (fix-color g)) (int (fix-color b))))
-
-(defn ^:static falloff-color [c total]
-  (* 2 (/ c  ((if (> total THRESHOLD) - +) THRESHOLD total))))
 
 (defn ^:static influence 
   [{:keys [x y radius]} px py]
@@ -60,19 +55,8 @@
       (loop [x 0]
         (loop [y 0]          
           (let [[total red green blue] 
-                (reduce (partial compute-color x y) [0 0 0 0] balls)]
-            
-            ;;metaball
-            (paint-square g (color-in-range red green blue) x y step)
-            
-            ;;falloff
-            (if (<= total THRESHOLD)
-              (paint-square g 
-                (color-in-range 
-                  (falloff-color red total) 
-                  (falloff-color green total) 
-                  (falloff-color blue total))
-                x y step)))            
+                (reduce (partial compute-color x y) [0 0 0 0] balls)]                        
+            (paint-square g (color-in-range red green blue) x y step))            
           (if (< y HEIGHT) (recur (int (+ y step)))))
         (if (< x WIDTH) (recur (int (+ x step)))))
       
