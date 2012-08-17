@@ -1,4 +1,4 @@
-(ns metaballs
+(ns yuggoth.views.metaballs
   (:import
     [javax.swing JFrame]
     [java.awt Canvas Graphics Color]
@@ -8,16 +8,15 @@
 
 (def ^:const WIDTH (int 300))
 (def ^:const HEIGHT (int 300))
-(def ^:const MIN-THRESHOLD (double 1))
-(def ^:const MAX-THRESHOLD (double 1.1))
+(def ^:const THRESHOLD (double 1.005))
 
 (defn ^:static move [{:keys [x y vx vy radius color]}]
-  (let [new-vx (double (if (or (> x WIDTH) (neg? x)) (- vx) vx))
-        new-vy (double (if (or (> y HEIGHT) (neg? y)) (- vy) vy))]
-    {:x (double (+ x new-vx))
-     :y (double (+ y new-vy))
-     :vx new-vx
-     :vy new-vy
+  (let [vx (double (if (or (> x WIDTH) (neg? x)) (- vx) vx))
+        vy (double (if (or (> y HEIGHT) (neg? y)) (- vy) vy))]
+    {:x (double (+ x vx))
+     :y (double (+ y vy))
+     :vx vx
+     :vy vy
      :radius radius
      :color color}))
 
@@ -31,23 +30,22 @@
   (new Color (int (fix-color r)) (int (fix-color g)) (int (fix-color b))))
 
 (defn ^:static falloff-color [c total]
-  (* 2 (/ c  (if (> total MAX-THRESHOLD) 
-               (- MAX-THRESHOLD total) 
-               (+ MIN-THRESHOLD total)))))
+  (* 2 (/ c  ((if (> total THRESHOLD) - +) THRESHOLD total))))
 
-(defn ^:static get-influence 
+(defn ^:static influence 
   [{:keys [x y radius]} px py]
   (let [dx (double (- x px))
-        dy (double (- y py))
-        dist (Math/sqrt (+ (* dx dx) (* dy dy)))]
-    (if (>= dist 0) (double (/ radius dist)) 0)))
+        dy (double (- y py))]
+    (double (/ radius (Math/sqrt (+ (* dx dx) (* dy dy)))))))
+
 
 (defn ^:static paint-square [^Graphics g ^Color color x y size]
-  (.setColor g color)
-  (.fillRect g x y size size))
+  (doto g
+    (.setColor color)
+    (.fillRect x y size size)))
 
 (defn ^:static compute-color [x y [sum red-cur green-cur blue-cur] ball]   
-  (let [influence (get-influence ball x y)
+  (let [influence (influence ball x y)
         [r g b] (:color ball)] 
     [(+ sum influence)
      (+ red-cur (* influence r))
@@ -59,35 +57,29 @@
         ^Graphics g            (.getDrawGraphics buffer)
         step 3]
     (try      
-      (doto g
-        (.setColor Color/BLACK)
-        (.fillRect 0 0 WIDTH HEIGHT))
-
       (loop [x 0]
         (loop [y 0]          
           (let [[total red green blue] 
                 (reduce (partial compute-color x y) [0 0 0 0] balls)]
 
             ;;center
-            (if (>= total MIN-THRESHOLD)              
+            (if (>= total THRESHOLD)              
               (paint-square g (color-in-range red green blue) x y step))
             
             ;;outline
-            (if (and (>= total MIN-THRESHOLD) (<= total MAX-THRESHOLD))                
+            (if (and (>= total THRESHOLD) (<= total THRESHOLD))                
               (paint-square g (color-in-range red green blue) x y step))
             
             ;;falloff
-            (if (<= total MAX-THRESHOLD)
+            (if (<= total THRESHOLD)
               (paint-square g 
                 (color-in-range 
                   (falloff-color red total) 
                   (falloff-color green total) 
                   (falloff-color blue total))
                 x y step)))            
-          (if (< y HEIGHT)              
-            (recur (int (+ y step)))))
-        (if (< x WIDTH)           
-          (recur (int (+ x step)))))
+          (if (< y HEIGHT) (recur (int (+ y step)))))
+        (if (< x WIDTH) (recur (int (+ x step)))))
       
       (finally (.dispose g)))
     (if-not (.contentsLost buffer)
@@ -121,4 +113,4 @@
       (draw canvas balls)
       (recur (map move balls)))))
  
-(-main)
+;(-main)
