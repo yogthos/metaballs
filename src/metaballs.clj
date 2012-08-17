@@ -1,4 +1,4 @@
-(ns yuggoth.views.metaballs
+(ns metaballs
   (:import
     [javax.swing JFrame]
     [java.awt Canvas Graphics Color]
