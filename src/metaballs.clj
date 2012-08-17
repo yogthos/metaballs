@@ -4,41 +4,40 @@
     [java.awt Canvas Graphics Color]
     java.awt.image.BufferStrategy))
 
-(def ^:const SIZE (int 300))
-(def ^:const THRESHOLD (double 1.005))
+(def  SIZE 300)
+(def  THRESHOLD 1.005)
 
-(defn ^:static move [{:keys [x y vx vy radius color]}]
-  (let [vx (double (if (or (> x SIZE) (neg? x)) (- vx) vx))
-        vy (double (if (or (> y SIZE) (neg? y)) (- vy) vy))]
-    {:x (double (+ x vx))
-     :y (double (+ y vy))
+(defn move [{:keys [x y vx vy radius color]}]
+  (let [vx (if (or (> x SIZE) (neg? x)) (- vx) vx)
+        vy (if (or (> y SIZE) (neg? y)) (- vy) vy)]
+    {:x (+ x vx)
+     :y (+ y vy)
      :vx vx
      :vy vy
      :radius radius
      :color color}))
 
-(defn ^:static fix-color [c]
+(defn fix-color [c]
   (cond 
     (< c 0) 0
     (> c 255) 255
     :default c))
 
-(defn ^:static color-in-range [r g b]
+(defn color-in-range [r g b]
   (new Color (int (fix-color r)) (int (fix-color g)) (int (fix-color b))))
 
-(defn ^:static influence 
+(defn influence 
   [{:keys [x y radius]} px py]
   (let [dx (double (- x px))
         dy (double (- y py))]
     (double (/ radius (Math/sqrt (+ (* dx dx) (* dy dy)))))))
 
-
-(defn ^:static paint-square [^Graphics g ^Color color x y size]
+(defn paint-square [^Graphics g ^Color color x y size]
   (doto g
     (.setColor color)
     (.fillRect x y size size)))
 
-(defn ^:static compute-color [x y [sum red-cur green-cur blue-cur] ball]   
+(defn compute-color [x y [sum red-cur green-cur blue-cur] ball]   
   (let [influence (influence ball x y)
         [r g b] (:color ball)] 
     [(+ sum influence)
@@ -46,10 +45,10 @@
      (+ green-cur (* influence g))
      (+ blue-cur (* influence b))]))
 
-(defn ^:static draw [^Canvas canvas balls]
-  (let [^BufferStrategy buffer (.getBufferStrategy canvas)
-        ^Graphics g            (.getDrawGraphics buffer)
-        step 3]
+(defn draw [^Canvas canvas balls]
+  (let [buffer (.getBufferStrategy canvas)
+        g      (.getDrawGraphics buffer)
+        step   3]
     (try
       (loop [x 0]
         (loop [y 0]          
@@ -87,8 +86,7 @@
       (.setVisible true)
       (.requestFocus))
          
-    (loop [balls (map metaball (range 6))]
-      (draw canvas balls)
+    (loop [balls (map metaball (range 6))]      
       (recur (map move balls)))))
  
 (-main)
