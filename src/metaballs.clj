@@ -61,14 +61,9 @@
         (loop [y 0]          
           (let [[total red green blue] 
                 (reduce (partial compute-color x y) [0 0 0 0] balls)]
-
-            ;;center
-            (if (>= total THRESHOLD)              
-              (paint-square g (color-in-range red green blue) x y step))
             
-            ;;outline
-            (if (and (>= total THRESHOLD) (<= total THRESHOLD))                
-              (paint-square g (color-in-range red green blue) x y step))
+            ;;metaball
+            (paint-square g (color-in-range red green blue) x y step)
             
             ;;falloff
             (if (<= total THRESHOLD)
@@ -113,4 +108,4 @@
       (draw canvas balls)
       (recur (map move balls)))))
  
-;(-main)
+(-main)
