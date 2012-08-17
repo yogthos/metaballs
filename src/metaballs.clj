@@ -4,13 +4,12 @@
     [java.awt Canvas Graphics Color]
     java.awt.image.BufferStrategy))
 
-(def ^:const WIDTH (int 300))
-(def ^:const HEIGHT (int 300))
+(def ^:const SIZE (int 300))
 (def ^:const THRESHOLD (double 1.005))
 
 (defn ^:static move [{:keys [x y vx vy radius color]}]
-  (let [vx (double (if (or (> x WIDTH) (neg? x)) (- vx) vx))
-        vy (double (if (or (> y HEIGHT) (neg? y)) (- vy) vy))]
+  (let [vx (double (if (or (> x SIZE) (neg? x)) (- vx) vx))
+        vy (double (if (or (> y SIZE) (neg? y)) (- vy) vy))]
     {:x (double (+ x vx))
      :y (double (+ y vy))
      :vx vx
@@ -51,22 +50,22 @@
   (let [^BufferStrategy buffer (.getBufferStrategy canvas)
         ^Graphics g            (.getDrawGraphics buffer)
         step 3]
-    (try      
+    (try
       (loop [x 0]
         (loop [y 0]          
           (let [[total red green blue] 
                 (reduce (partial compute-color x y) [0 0 0 0] balls)]                        
             (paint-square g (color-in-range red green blue) x y step))            
-          (if (< y HEIGHT) (recur (int (+ y step)))))
-        (if (< x WIDTH) (recur (int (+ x step)))))
+          (if (< y SIZE) (recur (int (+ y step)))))
+        (if (< x SIZE) (recur (int (+ x step)))))
       
       (finally (.dispose g)))
     (if-not (.contentsLost buffer)
       (.show buffer)) ))
  
 (defn metaball [_]
-  {:x      (rand-int WIDTH)
-   :y      (rand-int HEIGHT)
+  {:x      (rand-int SIZE)
+   :y      (rand-int SIZE)
    :vx     (double (inc (rand-int 6)))
    :vy     (double (inc (rand-int 6)))
    :radius (+ 10 (rand-int 19))
@@ -77,7 +76,7 @@
         canvas (Canvas.)]
      
     (doto frame
-      (.setSize WIDTH HEIGHT)      
+      (.setSize SIZE SIZE)      
       (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
       (.setResizable false)
       (.add canvas)
