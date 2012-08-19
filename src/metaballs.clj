@@ -19,14 +19,14 @@
      :radius radius
      :color color}))
 
-(defn fix-color [c]
+(defn color-in-range [c]
   (cond 
     (< c 0) 0
     (> c 255) 255
     :default c))
 
-(defn color-in-range [r g b]
-  (new Color (int (fix-color r)) (int (fix-color g)) (int (fix-color b))))
+(defn color [r g b]
+  (new Color (int (color-in-range r)) (int (color-in-range g)) (int (color-in-range b))))
 
 (defn influence [{:keys [x y radius]} px py]
   (let [dx (double (- x px))
@@ -54,7 +54,7 @@
         (loop [y 0]          
           (let [[red green blue] 
                 (reduce (partial compute-color x y) [0 0 0] balls)]                        
-            (paint-square g (color-in-range red green blue) x y step))            
+            (paint-square g (color red green blue) x y step))            
           (if (< y SIZE) (recur (int (+ y step)))))
         (if (< x SIZE) (recur (int (+ x step)))))
       
