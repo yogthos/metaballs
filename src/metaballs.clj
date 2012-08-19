@@ -55,8 +55,8 @@
           (let [[red green blue] 
                 (reduce (partial compute-color x y) [0 0 0] balls)]                        
             (paint-square g (color red green blue) x y step))            
-          (if (< y SIZE) (recur (int (+ y step)))))
-        (if (< x SIZE) (recur (int (+ x step)))))
+          (if (< y (- SIZE step)) (recur (+ y step))))
+        (if (< x (- SIZE step)) (recur (+ x step))))
       
       (finally (.dispose g)))
     (if-not (.contentsLost buffer)
