@@ -5,7 +5,6 @@
     java.awt.image.BufferStrategy))
 
 (def  SIZE 300)
-(def  THRESHOLD 1.005)
 
 (defn v' [p v]
   (if (or (> p SIZE) (neg? p)) (- v) v))
