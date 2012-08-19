@@ -7,9 +7,12 @@
 (def  SIZE 300)
 (def  THRESHOLD 1.005)
 
+(defn v' [p v]
+  (if (or (> p SIZE) (neg? p)) (- v) v))
+
 (defn move [{:keys [x y vx vy radius color]}]
-  (let [vx (if (or (> x SIZE) (neg? x)) (- vx) vx)
-        vy (if (or (> y SIZE) (neg? y)) (- vy) vy)]
+  (let [vx (v' x vx)
+        vy (v' y vy)]
     {:x (+ x vx)
      :y (+ y vy)
      :vx vx
@@ -26,8 +29,7 @@
 (defn color-in-range [r g b]
   (new Color (int (fix-color r)) (int (fix-color g)) (int (fix-color b))))
 
-(defn influence 
-  [{:keys [x y radius]} px py]
+(defn influence [{:keys [x y radius]} px py]
   (let [dx (double (- x px))
         dy (double (- y py))]
     (double (/ radius (Math/sqrt (+ (* dx dx) (* dy dy)))))))
