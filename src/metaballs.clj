@@ -6,12 +6,12 @@
 
 (def  SIZE 300)
 
-(defn v' [p v]
+(defn dv [p v]
   (if (or (> p SIZE) (neg? p)) (- v) v))
 
 (defn move [{:keys [x y vx vy radius color]}]
-  (let [vx (v' x vx)
-        vy (v' y vy)]
+  (let [vx (dv x vx)
+        vy (dv y vy)]
     {:x (+ x vx)
      :y (+ y vy)
      :vx vx
