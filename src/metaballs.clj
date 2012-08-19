@@ -37,11 +37,10 @@
     (.setColor color)
     (.fillRect x y size size)))
 
-(defn compute-color [x y [sum red-cur green-cur blue-cur] ball]   
+(defn compute-color [x y [red-cur green-cur blue-cur] ball]   
   (let [influence (influence ball x y)
         [r g b] (:color ball)] 
-    [(+ sum influence)
-     (+ red-cur (* influence r))
+    [(+ red-cur (* influence r))
      (+ green-cur (* influence g))
      (+ blue-cur (* influence b))]))
 
@@ -52,8 +51,8 @@
     (try
       (loop [x 0]
         (loop [y 0]          
-          (let [[total red green blue] 
-                (reduce (partial compute-color x y) [0 0 0 0] balls)]                        
+          (let [[red green blue] 
+                (reduce (partial compute-color x y) [0 0 0] balls)]                        
             (paint-square g (color-in-range red green blue) x y step))            
           (if (< y SIZE) (recur (int (+ y step)))))
         (if (< x SIZE) (recur (int (+ x step)))))
