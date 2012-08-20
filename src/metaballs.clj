@@ -7,12 +7,12 @@
 (set! *warn-on-reflection* true)
 (def SIZE 200)
 
-(defn dv [p v]
+(defn direction [p v]
   (if (or (> p SIZE) (neg? p )) (- v) v))
 
 (defn move [{:keys [x y vx vy radius color]}]
-  (let [vx (dv x vx)
-        vy (dv y vy)]
+  (let [vx (direction x vx)
+        vy (direction y vy)]
     {:x (+ x vx)
      :y (+ y vy)
      :vx vx
