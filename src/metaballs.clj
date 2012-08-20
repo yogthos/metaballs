@@ -60,7 +60,7 @@
     (if-not (.contentsLost buffer)
       (.show buffer)) ))
  
-(defn metaball [_]
+(defn metaball []
   {:x (rand-int SIZE)
    :y (rand-int SIZE)
    :vx (double (inc (rand-int 6)))
@@ -84,7 +84,7 @@
       (.setVisible true)
       (.requestFocus))
          
-    (loop [balls (map metaball (range 2))]
+    (loop [balls (take 2 (repeatedly metaball))]
       (draw canvas balls)
       (recur (map move balls)))))
  
