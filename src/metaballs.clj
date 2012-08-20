@@ -5,7 +5,7 @@
     java.awt.image.BufferStrategy))
 
 (set! *warn-on-reflection* true)
-(def ^:const SIZE 200)
+(def ^:const SIZE 250)
 
 (defn direction [p v]
   (if (or (> p SIZE) (neg? p )) (- v) v))
@@ -17,7 +17,7 @@
      :y (+ y vy)
      :vx vx
      :vy vy
-     :radius radius
+     :radius radius 
      :color color}))
 
 (defn color-in-range [c]
@@ -44,7 +44,7 @@
 (defn draw [^Canvas canvas balls]
   (let [buffer (.getBufferStrategy canvas)
         g (.getDrawGraphics buffer)
-        step 1]
+        step 2]
     (try
       (loop [x 0]
         (loop [y 0]
@@ -65,12 +65,12 @@
    :y (rand-int SIZE)
    :vx (double (inc (rand-int 6)))
    :vy (double (inc (rand-int 6)))
-   :radius (+ 40 (rand-int 15))
+   :radius ((if (= 0 (rand-int 2)) - +) (rand-int 15) 40)
    :color [(rand-int 256) (rand-int 256) (rand-int 256)]})
 
 (defn -main [& args]
-  (let [frame (JFrame. "Metaballs")
-        canvas (Canvas.)]
+  (let [frame  (new JFrame "Metaballs")
+        canvas (new Canvas)]
      
     (doto frame
       (.setSize SIZE SIZE)
@@ -83,9 +83,9 @@
       (.createBufferStrategy 2)
       (.setVisible true)
       (.requestFocus))
-         
-    (loop [balls (take 2 (repeatedly metaball))]
-      (draw canvas balls)
+       
+    (loop [balls (take 4 (repeatedly metaball))]      
+      (draw canvas balls)      
       (recur (map move balls)))))
- 
+
 (-main)
