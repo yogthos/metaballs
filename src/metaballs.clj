@@ -5,7 +5,7 @@
     java.awt.image.BufferStrategy))
 
 (set! *warn-on-reflection* true)
-(def SIZE 200)
+(def ^:const SIZE 200)
 
 (defn direction [p v]
   (if (or (> p SIZE) (neg? p )) (- v) v))
